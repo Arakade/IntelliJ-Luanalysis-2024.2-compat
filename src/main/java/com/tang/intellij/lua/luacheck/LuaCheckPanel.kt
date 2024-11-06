@@ -22,10 +22,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.TreeExpander
 import com.intellij.ide.projectView.TreeStructureProvider
-import com.intellij.ide.util.treeView.AbstractTreeBuilder
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.NodeRenderer
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -35,6 +35,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.impl.UsagePreviewPanel
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -42,7 +44,6 @@ import com.intellij.util.PlatformIcons
 import java.awt.GridLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
@@ -53,7 +54,7 @@ import javax.swing.tree.DefaultTreeModel
 class LuaCheckPanel(val project: Project) : SimpleToolWindowPanel(false), DataProvider {
     private val rootNode = DefaultMutableTreeNode()
     private val treeModel = DefaultTreeModel(rootNode)
-    private val tree: JTree = JTree(treeModel)
+    private val tree: Tree = Tree(treeModel)
     val builder:LuaCheckTreeBuilder = LuaCheckTreeBuilder(tree, treeModel, project)
     private val treeExpander = MyTreeExpander()
     private var myUsagePreviewPanel: UsagePreviewPanel? = null
@@ -185,24 +186,24 @@ class LuaCheckPanel(val project: Project) : SimpleToolWindowPanel(false), DataPr
     }
 }
 
-class LuaCheckTreeBuilder(tree: JTree, model: DefaultTreeModel, val project: Project)
-    : AbstractTreeBuilder(tree, model, LuaCheckTreeStructure(project), null, false) {
+class LuaCheckTreeBuilder(tree: Tree, model: DefaultTreeModel, val project: Project)
+    : StructureTreeModel<LuaCheckTreeStructure>(LuaCheckTreeStructure(project), project) { // TODO: Better disposable parent
+    private val ui = tree
     var isAutoScrollMode: Boolean = false
     var arePackagesShown: Boolean = true
     var showPreview: Boolean = false
 
-    override fun initRootNode() {
-        super.initRootNode()
+    fun initRootNode() {
         performUpdate()
     }
 
     fun clear() {
-        val root = rootElement as LCRootNode
+        val root = root as LCRootNode // TODO: Better cast
         root.clear()
     }
 
     fun addFile(file: PsiFile): LCPsiFileNode {
-        val root = rootElement as LCRootNode
+        val root = root as LCRootNode // TODO: Better cast
         val fileNode = LCPsiFileNode(project, file)
         root.append(fileNode)
         return fileNode
@@ -213,19 +214,24 @@ class LuaCheckTreeBuilder(tree: JTree, model: DefaultTreeModel, val project: Pro
     }
 
     fun performUpdate() {
-        queueUpdateFrom(rootNode, true)
+        //queueUpdateFrom(getRoot(), true)
+        invalidateAsync()
     }
 
     fun collapseAll() {
-        var rc = tree.rowCount - 1
+        var rc = root.childCount - 1
         while (rc >= 0) {
-            tree.collapseRow(rc)
+            ui.collapseRow(rc)
             rc--
         }
     }
 
     fun expandAll() {
-        ui.expandAll {  }
+        var rc = ui.rowCount - 1
+        while (rc >= 0) {
+            ui.expandRow(rc)
+            rc--
+        }
     }
 }
 

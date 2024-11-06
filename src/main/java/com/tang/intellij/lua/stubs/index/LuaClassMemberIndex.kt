@@ -36,6 +36,7 @@ typealias ProcessLuaPsiClassMember = (ownerTy: ITyClass, member: LuaPsiTypeMembe
 class LuaClassMemberIndex : StringStubIndexExtension<LuaPsiTypeMember>() {
     override fun getKey() = StubKeys.CLASS_MEMBER
 
+    @Deprecated("Deprecated in Java")
     override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<LuaPsiTypeMember> =
             StubIndex.getElements(StubKeys.CLASS_MEMBER, s, project, scope, LuaPsiTypeMember::class.java)
 

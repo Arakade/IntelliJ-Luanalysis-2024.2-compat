@@ -6,13 +6,13 @@ fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.6.20"
+    id("org.jetbrains.kotlin.jvm") version "1.8.21"
 
-    id("org.jetbrains.intellij") version "1.7.0"
+    id("org.jetbrains.intellij") version "1.13.3"
 
     id("org.jetbrains.changelog") version "2.0.0"
 
-    id("de.undercouch.download") version "3.4.3"
+    id("de.undercouch.download") version "5.3.0"
 }
 
 group = properties("pluginGroup")
@@ -20,7 +20,6 @@ version = properties("pluginVersion")
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
@@ -28,12 +27,17 @@ dependencies {
         include("*.jar")
     })
 
-    implementation("org.jetbrains:markdown:0.3.1")
+    implementation("org.jetbrains:markdown:0.7.3")
+
+    //testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+    testImplementation("org.opentest4j:opentest4j:1.2.0")
+
+
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
@@ -74,19 +78,20 @@ tasks {
     }
 
     withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
 
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "11"
+        kotlinOptions.jvmTarget = "17"
         kotlinOptions.freeCompilerArgs = listOf(
             "-Xjvm-default=all",
-            "-Xopt-in=kotlin.contracts.ExperimentalContracts"
+            "-opt-in=kotlin.contracts.ExperimentalContracts"
         )
     }
 
     patchPluginXml {
+        dependsOn("copyEmmyLuaDebugger")
         version.set(properties("pluginVersion"))
         changeNotes.set(provider {
             with(changelog) {

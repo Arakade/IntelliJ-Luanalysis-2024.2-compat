@@ -40,6 +40,7 @@ class LuaLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider()
         return SmartIndentOptionsEditor()
     }
 
+    @Deprecated("Deprecated in Java")
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings {
         val commonSettings = CommonCodeStyleSettings(language)
         commonSettings.initIndentOptions()

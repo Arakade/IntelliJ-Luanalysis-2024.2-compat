@@ -45,7 +45,6 @@ class LuaQualifiedNameProvider : QualifiedNameProvider {
         return null
     }
 
-    override fun insertQualifiedName(s: String, psiElement: PsiElement?, editor: Editor, project: Project?) {
-
+    override fun insertQualifiedName(fqn: String, element: PsiElement, editor: Editor, project: Project) {
     }
 }

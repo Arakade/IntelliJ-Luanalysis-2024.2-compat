@@ -58,14 +58,14 @@ class LuaCallHierarchyBrowser(element: PsiElement) : CallHierarchyBrowserBase(el
         val callerTree = createHierarchyTree(group)
         val calleeTree = createHierarchyTree(group)
 
-        trees[CallHierarchyBrowserBase.CALLER_TYPE] = callerTree
-        trees[CallHierarchyBrowserBase.CALLEE_TYPE] = calleeTree
+        trees[CallHierarchyBrowserBase.getCallerType()] = callerTree
+        trees[CallHierarchyBrowserBase.getCalleeType()] = calleeTree
     }
 
     override fun createHierarchyTreeStructure(typeName: String, psiElement: PsiElement): HierarchyTreeStructure? =
             when (typeName) {
-                CallHierarchyBrowserBase.CALLER_TYPE -> LuaCallerFunctionTreeStructure(myProject, psiElement)
-                CallHierarchyBrowserBase.CALLEE_TYPE -> LuaCalleeFunctionTreeStructure(myProject, psiElement)
+                CallHierarchyBrowserBase.getCallerType() -> LuaCallerFunctionTreeStructure(myProject, psiElement)
+                CallHierarchyBrowserBase.getCalleeType() -> LuaCalleeFunctionTreeStructure(myProject, psiElement)
                 else -> null
             }
 }
