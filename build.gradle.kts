@@ -1,5 +1,6 @@
 import de.undercouch.gradle.tasks.download.Download
-import org.jetbrains.changelog.Changelog
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -8,7 +9,7 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.8.21"
 
-    id("org.jetbrains.intellij") version "1.13.3"
+    id("org.jetbrains.intellij.platform") version "2.1.0"
 
     id("org.jetbrains.changelog") version "2.0.0"
 
@@ -20,6 +21,9 @@ version = properties("pluginVersion")
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
@@ -29,10 +33,34 @@ dependencies {
 
     implementation("org.jetbrains:markdown:0.7.3")
 
-    //testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+    testImplementation("junit:junit:4.13.2")
     testImplementation("org.opentest4j:opentest4j:1.2.0")
 
+    intellijPlatform {
+        intellijIdeaCommunity("2024.2.1") // provider { properties("platformVersion") })
 
+        instrumentationTools()
+
+        testFramework(TestFrameworkType.Platform)
+
+        // TODO: This is causing `:test` to fail the build due to not being able to load the following from Maven:
+        // - ai.grazie.spell:gec-spell-engine-local-jvm:0.3.103
+        // - ai.grazie.nlp:nlp-detect-jvm:0.3.103
+        // - ai.grazie.spell:hunspell-en-jvm:0.2.141
+        // - ai.grazie.utils:utils-lucene-lt-compatibility-jvm:0.3.103
+        // - org.jetbrains.teamcity:serviceMessages:2024.11.1
+        testImplementation("com.jetbrains.intellij.java:java-test-framework:242.23726.103")
+
+        // TODO: Think this is no longer needed
+//        plugins(properties("platformPlugins")
+//            .split(",")
+//            .map(String::trim)
+//            .filter(String::isNotEmpty)
+//        )
+
+        //bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
+
+    }
 }
 
 java {
@@ -41,19 +69,36 @@ java {
     }
 }
 
-intellij {
-    pluginName.set(properties("pluginName"))
-    version.set(properties("platformVersion"))
+intellijPlatform {
+    pluginConfiguration {
+        name = properties("pluginName")
+        version = properties("platformVersion")
+    }
 
-    downloadSources.set(properties("platformDownloadSources").toBoolean())
-    updateSinceUntilBuild.set(false)
+    pluginVerification {
 
-    plugins.set(
-        properties("platformPlugins")
-            .split(",")
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-    )
+        ides {
+            select {
+                //types = IntelliJPlatformType.values().asList() // listOf(IntelliJPlatformType.IntellijIdeaCommunity, IntelliJPlatformType.IntellijIdeaUltimate)
+                types = listOf(IntelliJPlatformType.IntellijIdeaCommunity, IntelliJPlatformType.IntellijIdeaUltimate)
+                sinceBuild = properties("pluginSinceBuild")
+            }
+        }
+    }
+
+    // TODO: Integrate this in above
+//    runPluginVerifier {
+//        ideVersions.set(
+//            properties("pluginVerifierIdeVersions")
+//                .split(',')
+//                .map(String::trim)
+//                .filter(String::isNotEmpty)
+//        )
+//     }
+
+    // TODO: downloadSources.set(properties("platformDownloadSources").toBoolean())
+    // TODO: updateSinceUntilBuild.set(false)
+
 }
 
 changelog {
@@ -92,7 +137,7 @@ tasks {
 
     patchPluginXml {
         dependsOn("copyEmmyLuaDebugger")
-        version.set(properties("pluginVersion"))
+        sinceBuild.set(properties("pluginVersion"))
         changeNotes.set(provider {
             with(changelog) {
                 renderItem(
@@ -171,15 +216,6 @@ tasks {
             include("!!DONT_UNZIP_ME!!.txt")
             into("/${project.name}")
         }
-    }
-
-    runPluginVerifier {
-        ideVersions.set(
-            properties("pluginVerifierIdeVersions")
-                .split(',')
-                .map(String::trim)
-                .filter(String::isNotEmpty)
-        )
     }
 
     publishPlugin {
