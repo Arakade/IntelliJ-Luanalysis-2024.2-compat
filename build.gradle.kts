@@ -24,6 +24,8 @@ repositories {
     intellijPlatform {
         defaultRepositories()
     }
+    maven(url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public")
+    maven(url = "https://download.jetbrains.com/teamcity-repository")
 }
 
 dependencies {
